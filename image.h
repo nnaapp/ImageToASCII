@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <string>
 
 using namespace std;
 
@@ -33,12 +34,12 @@ bool loadImage(image &imageData, const string &fileName);
 
 void grayscale(image &imageData);
 
-void contrast(image &imageData);
+void contrast(image &imageData, double contrast);
 
 rgb getPixel(vector<unsigned char> &pixels, int index);
 
-void writeImage(image &imageData);
+void writeImage(image &imageData, string fileName);
 
-void writeASCII(image imageData);
+void writeASCII(image imageData, string fileName, int blockSize, string background);
 
 #endif

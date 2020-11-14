@@ -51,20 +51,8 @@ void grayscale(image &imageData)
 }
 
 // Takes an image data vector as well as the width/height/elements per pixel of the data, and then increases the contrast based on user input
-void contrast(image &imageData)
+void contrast(image &imageData, double contrast)
 {
-    // Gets the contrast change value from the user and validates it
-    double contrast;
-    cout << "Contrast value (0.0 to 4.0): ";
-    cin >> contrast;
-    while (contrast < 0 || contrast > 4)
-    {
-        cout << "Invalid contrast value, please pick a number between 0.0 and 4.0: ";
-        cin >> contrast;
-    }
-    cin.ignore();
-    cout << endl;
-
     // Now having the contrast value, all possible outputs for values 0-255 can be calculated and casted to unsigned chars
     // Using a loop, a lookup table of contrast outputs is generated to avoid repeating any work over thousands of pixels
     unsigned char *contrast_table = new unsigned char [256];
@@ -123,7 +111,7 @@ rgb getPixel(vector<unsigned char> &pixels, int index)
 
 // Writes the modified image out to a PNG file of the user's choice, taking the image and its width/height/elements per pixel as arguments
 // Outputs a PNG even if the input was anything else
-void writeImage(image &imageData)
+void writeImage(image &imageData, string fileName)
 {
     // Converts the vector BACK to a pointer, which was its original format when it was read from an image
     int numPixels = imageData.pixels.size();
@@ -138,14 +126,8 @@ void writeImage(image &imageData)
     const int HEIGHT = imageData.height;
     const int ELEMENTSPP = imageData.elementspp;
 
-    // Gets the output file name from the user
-    string outImageName;
-    cout << "Output image name (.png!): ";
-    getline(cin, outImageName);
-    cout << endl;
-
     // Writes the pointer out to a PNG file in the directory of the executable
-    stbi_write_png(outImageName.c_str(), WIDTH, HEIGHT, ELEMENTSPP, imageptr, WIDTH * ELEMENTSPP);
+    stbi_write_png(fileName.c_str(), WIDTH, HEIGHT, ELEMENTSPP, imageptr, WIDTH * ELEMENTSPP);
     delete[] imageptr;
     cout << "Image output complete." << endl << endl;
     return;
@@ -153,49 +135,29 @@ void writeImage(image &imageData)
 
 // Writes the given image out as ASCII text by averaging the brightnesses of "blocks" of pixels 
 // (assuming grayscale) and running that through a global table that corresponds to ASCII characters
-void writeASCII(image imageData)
+void writeASCII(image imageData, string fileName, int blockSize, string background)
 {
-    // Prompts the user for a name for the output .txt file, then opens it
-    string outFileName;
-    cout << "Output text file name (.txt!): ";
-    getline(cin, outFileName);
-    cout << endl;
-    ofstream outFile(outFileName);
+    ofstream outFile(fileName);
 
-    // Prompt the user for how tall a block of pixels should be (3 or more, validated), and calculate the width of each block from that for a more correct "image" dimensions ratio
-    int blockH, blockW;
+    // Calculate the block width from the block height (aka blockSize)
     const double BLOCK_W_H_RATIO = 0.375;
-    cout << "Block height (3 or more): ";
-    cin >> blockH;
-    while (blockH < 3)
-    {
-        cout << "Invalid, please give a number 3 or larger: ";
-        cin >> blockH;
-    }
-    cin.ignore();
-    cout << endl;
-    blockW = round(static_cast<double>(blockH) * (BLOCK_W_H_RATIO)); // Casts the height to a double, then multiples it by the % of the height the width should be
+    int blockH = blockSize;
+    int blockW = round(static_cast<double>(blockH) * (BLOCK_W_H_RATIO)); // Casts the height to a double, then multiples it by the % of the height the width should be
 
-    // Ask the user if the image background is dark or light (1 or 2, validated, converted to bool), which determines whether or not to invert the table of ASCII characters
+    // Set the inversion bool to true or false based on the background brightness
     bool inverse;
-    int inverseNum;
-    cout << "Dark or light background:" << endl;
-    cout << "\t1 - Dark" << endl;
-    cout << "\t2 - Light" << endl;
-    cout << "Choice (1 or 2): ";
-    cin >> inverseNum;
-    while (inverseNum != 1 && inverseNum != 2)
+    if (background.compare("dark") == 0)
     {
-        cout << "Please pick a menu option, 1 or 2: ";
-        cin >> inverseNum;
+        inverse = true;
     }
-    cout << endl;
-    switch (inverseNum)
+    else if (background.compare("light") == 0)
     {
-        case 1:
-            inverse = true; break;
-        case 2:
-            inverse = false; break;
+        inverse = false;
+    }
+    else
+    {
+        cout << "Invalid background brightness argument (not \"dark\" or \"light\"), defaulting to \"dark\"." << endl;
+        inverse = true;
     }
 
     const int WIDTH = imageData.width;
@@ -239,7 +201,7 @@ void writeASCII(image imageData)
 
     outFile.close();
 
-    cout << "Text output complete." << endl;
+    cout << "Text output complete.";
 
     return;
 }
